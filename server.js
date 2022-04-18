@@ -18,8 +18,10 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const app = express();
 
 // Importing the Routes
-var eventsRouter = require('./routes/eventsRouter');
-var accountRouter = require('./routes/accountRouter')
+const eventsRouter = require('./routes/eventsRouter');
+const accountRouter = require('./routes/accountRouter')
+const connect_strava = require('./controllers/connect_strava')
+const event_strava = require('./controllers/join_event')
 
 
 app.set('views', path.join(__dirname, 'views'));
@@ -41,152 +43,9 @@ app.use('/account', accountRouter);
 
 // R O U T E A || E N D P O I N T S
 
-app.get('/profile/:uuid', (req, res) => {
-   let id = req.params.uuid;
+app.post('/connect_strava', connect_strava.connectStrava)
 
-  const sql = `SELECT uuid,fname,lname,athlete_id,email,phone_number,gender,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number FROM users WHERE uuid = ?`;
-  let params = [id];
-
-  db.all(sql,params, (err, data, fields) => {
-    if (err)
-      return console.error(err.message);
-    
-      if(data.length <= 0) {
-        res.status(200).send(`Hi! ${id} <br> JSON DATA = <br> <h1>NO USER FOUND @ UUID = ${id}</h1>`);
-      }
-      else {
-        res.status(200).send(data[0]);
-
-        //res.send(`Hi! ${id} <br> JSON DATA = <br> ${data[0].fname + ' ' + data[0].lname}`);
-      }
-  })
-})
-
-app.post('/login', (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
-  console.log(email, password);
-
-  const sql = `SELECT uuid,fname,lname,athlete_id,email,password,phone_number,gender,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number FROM users WHERE email = ? AND password = ?`;
-  let params = [email, password];
-
-  db.all(sql,params, (err, data, fields) => {
-    if (err)
-      return console.error(err.message);
-    
-    if (data.length > 0) {
-      res.status(200).send(data[0]);  
-    } else {
-      res.sendStatus(403);      
-    }  
-  })
-});
-
-app.post('/signup', (req, res) => {
-  let uuid = Date.now();
-  let fname = req.body.fname;
-  let lname = req.body.lname;
-  let email = req.body.email;
-  let password = req.body.password;
-  let phone_number = req.body.phone_number;
-  let gender = req.body.gender;
-  let date_of_birth = req.body.date_of_birth;
-  let blood_group = req.body.blood_group;
-  let emergency_contact = req.body.emergency_contact;
-	let relation_emergency_contact = req.body.relation_emergency_contact;
-	let insta_link = req.body.insta_link;
-	let facebook_link = req.body.facebook_link;
-	let twitter_link = req.body.twitter_link;
-	let linkdin_link = req.body.linkdin_link;
-	let occupation = req.body.occupation;
-	let about_you = req.body.about_you;
-	let accident_insurance_number = req.body.accident_insurance_number;
-
-  const sql = `INSERT INTO users(uuid,fname,lname,email,password,phone_number,gender,age,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
-  let params = [uuid,fname,lname,email,password,phone_number,gender,age,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number];
-
-  db.all(sql,params, (err, data, fields) => {
-    if (err)
-      return console.error(err.message);
-     
-      res.status(200)
-      console.error("A/C created =>  "+ email + " " + password);
-    }
-  )
-});
-
-app.post('/connect_strava', (req, res) => {
-    
-  var { code, uuid, email } = req.body;
-  console.log(code);
-  console.log(uuid);
-  console.log(email);
-
-    async function strava() {
-      const headers = {
-        'Accept' : 'application/json, text/plain, */*',
-        'Content-Type' : 'application/json'
-        }
-
-      const body = JSON.stringify({
-        client_id : '76784',
-        client_secret : '76c6081709c9a95b48a176d2b3260ddd2d8f79e6',
-        code : code,
-        grant_type : 'authorization_code',
-        })
-
-      const oAuthExchange = await fetch('https://www.strava.com/oauth/token', {
-            method : 'POST',
-            "headers" : headers,
-            "body" : body,
-        })
-
-    const oAuthRes = await oAuthExchange.json();
-
-    // console.log("Access Token =>  " + oAuthRes.access_token);
-    // console.log("Refresh Token =>  " + oAuthRes.refresh_token);
-    // console.log("Strava Athlete ID =>  " + oAuthRes.athlete.id);
-    // console.log("Expiration AT =>  " + oAuthRes.expires_at);
-    // console.log("Expiration IN =>  " + oAuthRes.expires_in);
-
-    // console.log("Response JSON =>  \n");
-    // console.log(oAuthRes);
-    
-
-    //const sql = `INSERT INTO users(athlete_id,refresh_token,access_token,access_token_expiration) VALUES(?,?,?,?,?) WHERE email = ?;`;
-    const sql = `UPDATE users SET athlete_id=?, refresh_token=?, access_token=?, access_token_expiration=? WHERE email = ?;`;
-    let params = [oAuthRes.athlete.id,oAuthRes.refresh_token,oAuthRes.access_token,oAuthRes.expires_at,email];
-  
-    db.all(sql,params, (err, data, fields) => {
-      if (err)
-        return console.error(err.message);
-       
-        res.status(200)
-        console.error("Strava connected =>  "+ oAuthRes.athlete.id + " " + oAuthRes.refresh_token);
-      }
-    )
-    } 
-    strava()
-
-    
-})
-
-app.post('/join_event', (req, res) => {
-  let { uuid, athlete_id, event_start_date, event_end_date, event_name } = req.body;
-
-  const sql = `INSERT INTO event(uuid, athlete_id, event_start_date, event_end_date, event_name) VALUES(?,?,?,?,?);`;
-  let params = [uuid, athlete_id, event_start_date, event_end_date,event_name];
-
-  db.all(sql,params, (err, data, fields) => {
-    if (err)
-      return console.error(err.message);
-     
-      res.status(200)
-      console.error("Event Joint by Athlete =>  "+ uuid + " " + athlete_id);
-    }
-  )
-});
-
+app.post('/join_event', event_strava.joinEvent);
 
 
 // Inserting Webhook Values into DB

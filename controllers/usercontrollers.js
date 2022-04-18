@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 
 require("dotenv").config();
+const fs = require('fs');
 const cookieParser = require("cookie-parser");
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
@@ -18,6 +19,21 @@ const register = async (req, res) => {
     var errors = []
     try {
         const { fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
+        
+        /*
+        var dir = `./ProfilePics/${req.body.fname}/`;
+
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        var oldPath = `./ProfilePics/${req.file.filename}`
+        var newPath = `./ProfilePics/${req.body.fname}/${req.file.filename}.jpg`;
+
+        fs.rename(oldPath, newPath, function (err) {
+            if (err) throw err
+            console.log('Image uploaded Successfully')
+        })
+        */
 
         if (!fname) {
             errors.push("Firstname is missing");
@@ -39,6 +55,8 @@ const register = async (req, res) => {
             return;
         }       
 
+        console.log("Password => " + password);
+
         var sql = "SELECT * FROM users WHERE email = ?"
         await db.all(sql, email, async (err, result) => {
             if (err) {
@@ -49,6 +67,7 @@ const register = async (req, res) => {
             if (result.length == 0) {
                 var data = {
                     uuid: Date.now(),
+                    filename: req.file.filename,
                     fname: fname,
                     lname: lname,
                     email: email,
@@ -69,8 +88,8 @@ const register = async (req, res) => {
                     DateCreated: Date('now')
                 }
 
-                var sql = 'INSERT INTO users (uuid, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-                var params = [data.uuid, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
+                var sql = 'INSERT INTO users (uuid,filename, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                var params = [data.uuid, data.filename, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
                 await db.run(sql, params, (err, innerResult) => {
                     if (err) {                        
                         res.status(400).json({ "error": err.message })
@@ -106,7 +125,7 @@ const login = async (req, res) => {
 
         const user = [];
 
-        var sql = "SELECT * FROM users WHERE email = ?";
+        const sql = "SELECT uuid,filename,fname,lname,athlete_id,email,password,phone_number,gender,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number FROM users WHERE email = ?";
         db.all(sql, email, async function (err, rows) {
             if (err) {
                 res.status(400).json({ "error": err.message })
@@ -136,24 +155,21 @@ const login = async (req, res) => {
                     }
                 );
 
-                db.run(`UPDATE users SET DateLoggedIn = COALESCE(?,DateLoggedIn) WHERE email = ?`,
-                    [Date('now'), req.body.email], (err) => {
-                        if (err) {
-                            res.status(400).json({ "error": err.message })
-                            return;
-                        }
+                db.all(`UPDATE users SET DateLoggedIn = COALESCE(?,DateLoggedIn) WHERE email = ?;`, [Date('now'), email], (err) => {
+                    if (err) {
+                        return res.send(err.message).status(400);
                     }
-                    
-                    )
+                    return res.status(200).json({"jwt": token, "user": user[0]});
+                    })
 
             } else {
                 // console.log("No Password Match Found!");
                 return res.status(400).send("No Match");
             }
 
-            //    return res.status(200).send(user);   
+            //return res.status(200).send(user);   
             //return res.cookie('jwt', token, { httpOnly: true }).send(user).status(200)
-            return res.cookie('jwt', token).send(user).status(200)
+            console.log("User Logged In");
         });
 
     } catch (err) {
@@ -196,10 +212,10 @@ const alluser = (req, res, next) => {
 };
 
 
-// * S I N G L E U S E R
+// * S I N G L E U S E R     P R O F I L E
 
 const single = (req, res, next) => {
-    var sql = "select * from users where uuid = ?"
+    var sql = `SELECT uuid,fname,lname,athlete_id,email,phone_number,gender,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number FROM users WHERE uuid = ?`;
     var params = [req.params.uuid]
     db.all(sql, params, (err, row) => {
         if (err) {
@@ -221,31 +237,37 @@ const single = (req, res, next) => {
 // * U P D A T E   U S E R
 
 const update = async (req, res, next) => {
-    var salty = bcrypt.genSaltSync(10);
-    var data = {
-        phone: req.body.phone,
-        email: req.body.email,
-        // password: req.body.password ? bcrypt.hashSync(req.body.password, salty) : null,
-        password: await bcrypt.hashSync(req.body.password, salty),
-    }
-    // console.log(data)
+    
+    const {uuid, fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
+
     db.run(
-        `UPDATE users set 
-           phone = COALESCE(?,phone), 
-           email = COALESCE(?,email), 
-           password = COALESCE(?,Password)
-           WHERE uuid = ?`,
-        [data.phone, data.email, data.password, req.params.uuid],
+        `UPDATE users SET
+            fname = COALESCE(?,fname),
+            lname = COALESCE(?,lname),
+            phone_number = COALESCE(?,phone_number),
+            gender = COALESCE(?,gender),
+            date_of_birth = COALESCE(?,date_of_birth),
+            blood_group = COALESCE(?,blood_group),
+            emergency_contact = COALESCE(?,emergency_contact),
+            relation_emergency_contact = COALESCE(?,relation_emergency_contact),
+            insta_link = COALESCE(?,insta_link),
+            facebook_link = COALESCE(?,facebook_link),
+            twitter_link = COALESCE(?,twitter_link),
+            linkdin_link = COALESCE(?,linkdin_link),
+            occupation = COALESCE(?,occupation),
+            about_you = COALESCE(?,about_you),
+            accident_insurance_number = COALESCE(?,accident_insurance_number)
+            WHERE uuid = ?`,
+
+        [fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
+
         function (err, result) {
             if (err) {
-                res.status(400).json({ "error": res.message })
+                res.status(400).json({ "error": err.message })
                 return;
             }
-            res.json({
-                message: "success4",
-                data: data,
-                changes: this.changes
-            })
+
+            return res.status(202).json({message: "success4", changes: this.changes})
         });
 }
 

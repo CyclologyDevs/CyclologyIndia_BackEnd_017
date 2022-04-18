@@ -1,15 +1,16 @@
 const db = require('../config/database');
-var fs = require('fs');
+const multer  = require('multer')
+const fs = require('fs');
 
 const imageupload = function async(req, res) {
 
-    var dir = `./blog/images/${req.body.UserId}`;
+    var dir = `./blog/images/${req.body.uuid}`;
 
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
-    var oldPath = `./blog/images/${req.body.UserId}`
-    var newPath = `./blog/images/${req.body.UserId}/${req.file.filename}.jpg`;
+    var oldPath = `./blog/images/${req.body.uuid}`
+    var newPath = `./blog/images/${req.body.uuid}/${req.file.filename}.jpg`;
 
     fs.rename(oldPath, newPath, function (err) {
         if (err) throw err
@@ -29,7 +30,7 @@ const imageupload = function async(req, res) {
 
 
     var sql = 'INSERT INTO blogs (uuid, fname, lname, description, filename, mimetype, size, DateCreated) VALUES (?,?,?,?,?,?,?,?)'
-    var params = [data.UserId, data.fname, data.lname, data.description, data.filename, data.mimetype, data.Size, Date('now')]
+    var params = [data.uuid, data.fname, data.lname, data.description, data.filename, data.mimetype, data.Size, Date('now')]
 
     db.run(sql, params, function (err, result) {
         if (err) {
