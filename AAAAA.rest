@@ -1,0 +1,8 @@
+
+POST http://127.0.0.1:3600/is_in_event
+
+{
+    "uuid": "1",
+    "athlete_id": "98790103",
+    "event_name": "Event 2"
+}

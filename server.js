@@ -22,6 +22,7 @@ const eventsRouter = require('./routes/eventsRouter');
 const accountRouter = require('./routes/accountRouter')
 const connect_strava = require('./controllers/connect_strava')
 const event_strava = require('./controllers/join_event')
+const is_in_event = require('./controllers/is_in_event')
 
 
 app.set('views', path.join(__dirname, 'views'));
@@ -34,6 +35,7 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static('public'));
+app.use('/ProfilePics', express.static('ProfilePics'))
 //app.use(express.urlencoded({extended:true}), cors({origin: 'http://localhost:3000'}));
 
 
@@ -46,6 +48,8 @@ app.use('/account', accountRouter);
 app.post('/connect_strava', connect_strava.connectStrava)
 
 app.post('/join_event', event_strava.joinEvent);
+
+app.post('/is_in_event', is_in_event.isInEvent);
 
 
 // Inserting Webhook Values into DB

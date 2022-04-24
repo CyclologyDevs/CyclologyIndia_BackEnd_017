@@ -1,4 +1,5 @@
-/* const dotenv = require('dotenv')
+/* 
+const dotenv = require('dotenv')
 require("dotenv").config();
 
 var nodemailer = require('nodemailer');
@@ -43,10 +44,7 @@ function sendEmail(email, token) {
 module.exports = sendEmail
 */
 
-
-
-
-
+require("dotenv").config();   //For use .env file
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (email, token) => {
@@ -63,16 +61,16 @@ const sendEmail = async (email, token) => {
             port: 587,
             secure: true,
             auth: {
-                user: '',
-                pass: '',
+                user: process.env.email,
+                pass: process.env.email_pass,
             },
         });
 
         await transporter.sendMail({
-            from: '',
-            to: '',
+            from: process.env.email,
+            to: email,
             subject: 'Reset Password Link Of Cycology',
-            html: '<p>You requested for reset password, kindly use this <a href="http://localhost:8080/reset-password/token=' + token + '">link</a> to reset your password</p>'
+            html: '<p>You requested for reset password, kindly use this <a href="http://localhost:3600/reset-password/token=' + token + '">link</a> to reset your password</p>'
         });
         console.log("email sent sucessfully");
     } catch (error) {

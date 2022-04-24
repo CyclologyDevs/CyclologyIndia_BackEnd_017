@@ -1,9 +1,9 @@
 const express = require('express');
 const db = require('../config/database');   //For DataBase Connection
 require("dotenv").config();
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));  // Com/on JS
 
-
-  async function strava(code, uuid, email) {
+  async function strava(code, uuid, email, req, res) {
     const headers = {
       'Accept' : 'application/json, text/plain, */*',
       'Content-Type' : 'application/json'
@@ -23,7 +23,8 @@ require("dotenv").config();
       })
 
   const oAuthRes = await oAuthExchange.json();
-
+  
+  // console.log("Code =>  " + code);
   // console.log("Access Token =>  " + oAuthRes.access_token);
   // console.log("Refresh Token =>  " + oAuthRes.refresh_token);
   // console.log("Strava Athlete ID =>  " + oAuthRes.athlete.id);
@@ -38,26 +39,26 @@ require("dotenv").config();
   const sql = `UPDATE users SET athlete_id=?, refresh_token=?, access_token=?, access_token_expiration=? WHERE email = ?;`;
   let params = [oAuthRes.athlete.id,oAuthRes.refresh_token,oAuthRes.access_token,oAuthRes.expires_at,email];
 
-  db.all(sql,params, (err, data, fields) => {
+  await db.run(sql,params, (err, data, fields) => {
     if (err)
       return console.error(err.message);
      
-      res.status(200).send("Strava Connected Successfully!");
       console.log("Strava connected =>  "+ oAuthRes.athlete.id + " " + oAuthRes.refresh_token);
-    }
-  )
+      
+    })
   } 
   
 
   connectStrava = async (req, res, next) => {
     const { code, uuid, email } = req.body;
 
-    db.all(`SELECT * FROM users WHERE uuid = ? AND email = ?;`, [uuid,email], (err, data, fields) => {
+    db.all(`SELECT * FROM users WHERE uuid = ? AND email = ?;`, [uuid,email], async (err, data, fields) => {
         if (err)
             return console.error(err.message);
 
         if(data[0].athlete_id == null) {
-            strava(code, uuid, email);
+            await strava(code, uuid, email, req, res);
+            return res.status(200).send("Strava Connected Successfully!");
         } else {
             return res.status(400).send("Strava Already Connected!")
         }

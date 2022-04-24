@@ -3,6 +3,7 @@ const app = express();
 
 require("dotenv").config();
 const fs = require('fs');
+const path = require('path'); 
 const cookieParser = require("cookie-parser");
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
@@ -16,7 +17,7 @@ const db = require('../config/database');   //For DataBase Connection
 // * R E G I S T E R   N E W   U S E R
 
 const register = async (req, res) => {
-    var errors = []
+    var errors = [];
     try {
         const { fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
         
@@ -68,6 +69,7 @@ const register = async (req, res) => {
                 var data = {
                     uuid: Date.now(),
                     filename: req.file.filename,
+                    //filename: "CYCLOLOGY",
                     fname: fname,
                     lname: lname,
                     email: email,
@@ -87,6 +89,21 @@ const register = async (req, res) => {
 	                accident_insurance_number: accident_insurance_number,
                     DateCreated: Date('now')
                 }
+
+                
+                var dir = `./ProfilePics/${data.uuid}/`;
+
+                if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir, { recursive: true });
+                }
+                var oldPath = `./ProfilePics/${req.file.filename}`
+                var newPath = `./ProfilePics/${data.uuid}/${req.file.filename}.jpg`;
+            
+                fs.rename(oldPath, newPath, function (err) {
+                    if (err) throw err
+                    console.log('Image uploaded Successfully')
+                })
+                
 
                 var sql = 'INSERT INTO users (uuid,filename, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
                 var params = [data.uuid, data.filename, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
@@ -159,7 +176,9 @@ const login = async (req, res) => {
                     if (err) {
                         return res.send(err.message).status(400);
                     }
-                    return res.status(200).json({"jwt": token, "user": user[0]});
+                    //return res.status(200).sendFile(path.join(__dirname, `./ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`))
+                    // return res.status(200).sendFile(path.join(__dirname, `./ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`)).json({"jwt": token, "user": user[0]});
+                    return res.status(200).json({"jwt": token, "user": user[0], "Photo": path.join(__dirname, `../ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`)});
                     })
 
             } else {
@@ -228,7 +247,7 @@ const single = (req, res, next) => {
         }
         res.json({
             "message": "success3",
-            "data": row
+            "data": row[0]
         })
     });
 };
