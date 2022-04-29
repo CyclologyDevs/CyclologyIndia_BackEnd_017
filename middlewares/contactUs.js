@@ -13,14 +13,14 @@ const sendEmail = async (name, email, message) => {
             port: 587,
             secure: true,
             auth: {
-                user: 'iamishika1441@gmail.com',
-                pass: 'thwwajpvnyehzjsn',
+                user: 'cycologydevteam@gmail.com',
+                pass: 'wwczgsfnmwcjxcye',
             },
         });
 
         await transporter.sendMail({
           from: `${email}`,
-          to: 'iamishika1441@gmail.com' ,
+          to: 'cycologydevteam@gmail.com' ,
           html: `<hr/> You got a message from <hr/>
           Email : ${email} <hr/>
           Name: ${name} <hr/>
