@@ -12,8 +12,8 @@ var athlete_id;
       }
 
     const body = JSON.stringify({
-      client_id : '76784',
-      client_secret : '76c6081709c9a95b48a176d2b3260ddd2d8f79e6',
+      client_id : process.env.Client_ID,
+      client_secret : process.env.Client_Secret,
       code : code,
       grant_type : 'authorization_code',
       })

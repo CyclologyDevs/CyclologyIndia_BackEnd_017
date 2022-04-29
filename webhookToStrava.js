@@ -68,8 +68,8 @@ async function getAccessToken(athelete,user,refresh_token,callback_stravaApiCall
   } 
 
   const body = JSON.stringify({
-    client_id : '76784',
-    client_secret : '76c6081709c9a95b48a176d2b3260ddd2d8f79e6',
+    client_id : process.env.Client_ID,
+    client_secret : process.env.Client_Secret,
     refresh_token : refresh_token,
     grant_type : 'refresh_token',
   })
