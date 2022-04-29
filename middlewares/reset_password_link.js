@@ -19,7 +19,7 @@ const reset_password_email = async function (req, res, next) {
         var type = ''
         var msg = ''
 
-        console.log(result[0]);
+        // console.log(result[0]);
 
         if (result[0].email.length > 0) {
 

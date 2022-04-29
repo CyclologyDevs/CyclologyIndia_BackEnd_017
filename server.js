@@ -23,6 +23,7 @@ const accountRouter = require('./routes/accountRouter')
 const connect_strava = require('./controllers/connect_strava')
 const event_strava = require('./controllers/join_event')
 const is_in_event = require('./controllers/is_in_event')
+const contact_us = require('./middlewares/contactUs')
 
 
 app.set('views', path.join(__dirname, 'views'));
@@ -50,6 +51,8 @@ app.post('/connect_strava', connect_strava.connectStrava)
 app.post('/join_event', event_strava.joinEvent);
 
 app.post('/is_in_event', is_in_event.isInEvent);
+
+app.post('/contact_us', contact_us.contactMe);
 
 
 // Inserting Webhook Values into DB

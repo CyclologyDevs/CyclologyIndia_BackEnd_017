@@ -3,6 +3,8 @@ const db = require('../config/database');   //For DataBase Connection
 require("dotenv").config();
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));  // Com/on JS
 
+var athlete_id;
+
   async function strava(code, uuid, email, req, res) {
     const headers = {
       'Accept' : 'application/json, text/plain, */*',
@@ -34,7 +36,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
   // console.log("Response JSON =>  \n");
   // console.log(oAuthRes);
   
-
+      athlete_id = oAuthRes.athlete.id;
   //const sql = `INSERT INTO users(athlete_id,refresh_token,access_token,access_token_expiration) VALUES(?,?,?,?,?) WHERE email = ?;`;
   const sql = `UPDATE users SET athlete_id=?, refresh_token=?, access_token=?, access_token_expiration=? WHERE email = ?;`;
   let params = [oAuthRes.athlete.id,oAuthRes.refresh_token,oAuthRes.access_token,oAuthRes.expires_at,email];
@@ -44,6 +46,8 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
       return console.error(err.message);
      
       console.log("Strava connected =>  "+ oAuthRes.athlete.id + " " + oAuthRes.refresh_token);
+
+      return oAuthRes.athlete.id;
       
     })
   } 
@@ -55,10 +59,12 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
     db.all(`SELECT * FROM users WHERE uuid = ? AND email = ?;`, [uuid,email], async (err, data, fields) => {
         if (err)
             return console.error(err.message);
-
-        if(data[0].athlete_id == null) {
+        if(data.length == 0)
+          return res.status(400).send("USER NOT FOUND!")
+        else if(data[0].athlete_id == null) {
             await strava(code, uuid, email, req, res);
-            return res.status(200).send("Strava Connected Successfully!");
+            //console.log(athlete_id);
+            return res.status(200).json({"msg": "Strava Connected Successfully!", "athlete_id": athlete_id});
         } else {
             return res.status(400).send("Strava Already Connected!")
         }

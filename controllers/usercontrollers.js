@@ -64,7 +64,7 @@ const register = async (req, res) => {
                 res.status(402).json({ "error": err.message });
                 return;
             }
-
+                //console.log(req.file)
             if (result.length == 0) {
                 var data = {
                     uuid: Date.now(),
@@ -178,8 +178,9 @@ const login = async (req, res) => {
                     }
                     //return res.status(200).sendFile(path.join(__dirname, `./ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`))
                     // return res.status(200).sendFile(path.join(__dirname, `./ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`)).json({"jwt": token, "user": user[0]});
-                    return res.status(200).json({"jwt": token, "user": user[0], "Photo": path.join(__dirname, `../ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`)});
-                    })
+                    //return res.status(200).json({"jwt": token, "user": user[0], "Photo": path.join(__dirname, `../ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`)});
+                    return res.status(200).json({"jwt": token, "user": user[0], "Photo":`ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`});
+                })
 
             } else {
                 // console.log("No Password Match Found!");
@@ -234,7 +235,7 @@ const alluser = (req, res, next) => {
 // * S I N G L E U S E R     P R O F I L E
 
 const single = (req, res, next) => {
-    var sql = `SELECT uuid,fname,lname,athlete_id,email,phone_number,gender,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number FROM users WHERE uuid = ?`;
+    var sql = `SELECT uuid,filename,fname,lname,athlete_id,email,phone_number,gender,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number FROM users WHERE uuid = ?`;
     var params = [req.params.uuid]
     db.all(sql, params, (err, row) => {
         if (err) {
@@ -256,38 +257,104 @@ const single = (req, res, next) => {
 // * U P D A T E   U S E R
 
 const update = async (req, res, next) => {
-    
-    const {uuid, fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
 
-    db.run(
-        `UPDATE users SET
-            fname = COALESCE(?,fname),
-            lname = COALESCE(?,lname),
-            phone_number = COALESCE(?,phone_number),
-            gender = COALESCE(?,gender),
-            date_of_birth = COALESCE(?,date_of_birth),
-            blood_group = COALESCE(?,blood_group),
-            emergency_contact = COALESCE(?,emergency_contact),
-            relation_emergency_contact = COALESCE(?,relation_emergency_contact),
-            insta_link = COALESCE(?,insta_link),
-            facebook_link = COALESCE(?,facebook_link),
-            twitter_link = COALESCE(?,twitter_link),
-            linkdin_link = COALESCE(?,linkdin_link),
-            occupation = COALESCE(?,occupation),
-            about_you = COALESCE(?,about_you),
-            accident_insurance_number = COALESCE(?,accident_insurance_number)
-            WHERE uuid = ?`,
+    const { uuid, fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
 
-        [fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
+        if(req.file !== undefined) {
 
-        function (err, result) {
-            if (err) {
-                res.status(400).json({ "error": err.message })
-                return;
-            }
+            let fily = req.file.filename;
+            let dir = `./ProfilePics/${uuid}/`;
+            let path = dir;
 
-            return res.status(202).json({message: "success4", changes: this.changes})
-        });
+            if( fs.existsSync(dir) ) {
+                fs.readdirSync(dir).forEach( function(file) {
+                  var curPath = path + "/" + file;
+                    if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                        deleteFolderRecursive(curPath);
+                    } else { // delete file
+                        fs.unlinkSync(curPath);
+                    }
+                });
+                fs.rmdirSync(path);
+        
+                fs.mkdirSync(dir, { recursive: true })
+              }
+        
+        
+                var oldPath = `./ProfilePics/${req.file.filename}`
+                var newPath = `./ProfilePics/${req.body.uuid}/${req.file.filename}.jpg`;
+        
+                fs.rename(oldPath, newPath, function (err) {
+                    if (err) throw err
+                    console.log('Image uploaded Successfully')
+                })
+
+                db.run(
+                    `UPDATE users SET
+                        filename = COALESCE(?,filename),
+                        fname = COALESCE(?,fname),
+                        lname = COALESCE(?,lname),
+                        phone_number = COALESCE(?,phone_number),
+                        gender = COALESCE(?,gender),
+                        date_of_birth = COALESCE(?,date_of_birth),
+                        blood_group = COALESCE(?,blood_group),
+                        emergency_contact = COALESCE(?,emergency_contact),
+                        relation_emergency_contact = COALESCE(?,relation_emergency_contact),
+                        insta_link = COALESCE(?,insta_link),
+                        facebook_link = COALESCE(?,facebook_link),
+                        twitter_link = COALESCE(?,twitter_link),
+                        linkdin_link = COALESCE(?,linkdin_link),
+                        occupation = COALESCE(?,occupation),
+                        about_you = COALESCE(?,about_you),
+                        accident_insurance_number = COALESCE(?,accident_insurance_number)
+                        WHERE uuid = ?`,
+            
+                    [fily, fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
+            
+                    function (err, result) {
+                        if (err) {
+                            res.status(400).json({ "error": err.message })
+                            return;
+                        }
+            
+                        return res.status(202).json({ message: "success4", changes: this.changes })
+                    });
+
+
+        } else {
+
+            db.run(
+                `UPDATE users SET
+                    
+                    fname = COALESCE(?,fname),
+                    lname = COALESCE(?,lname),
+                    phone_number = COALESCE(?,phone_number),
+                    gender = COALESCE(?,gender),
+                    date_of_birth = COALESCE(?,date_of_birth),
+                    blood_group = COALESCE(?,blood_group),
+                    emergency_contact = COALESCE(?,emergency_contact),
+                    relation_emergency_contact = COALESCE(?,relation_emergency_contact),
+                    insta_link = COALESCE(?,insta_link),
+                    facebook_link = COALESCE(?,facebook_link),
+                    twitter_link = COALESCE(?,twitter_link),
+                    linkdin_link = COALESCE(?,linkdin_link),
+                    occupation = COALESCE(?,occupation),
+                    about_you = COALESCE(?,about_you),
+                    accident_insurance_number = COALESCE(?,accident_insurance_number)
+                    WHERE uuid = ?`,
+        
+                [fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
+        
+                function (err, result) {
+                    if (err) {
+                        res.status(400).json({ "error": err.message })
+                        return;
+                    }
+        
+                    return res.status(202).json({ message: "success4", changes: this.changes })
+                });
+
+        }
 }
 
 

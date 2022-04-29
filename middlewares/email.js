@@ -51,8 +51,8 @@ const sendEmail = async (email, token) => {
     var email = email;
     var token = token;
 
-    console.log(email)
-    console.log(token)
+    // console.log(email)
+    // console.log(token)
 
     try {
         const transporter = nodemailer.createTransport({
@@ -61,16 +61,16 @@ const sendEmail = async (email, token) => {
             port: 587,
             secure: true,
             auth: {
-                user: process.env.email,
-                pass: process.env.email_pass,
+                user: 'iamishika1441@gmail.com',
+                pass: 'thwwajpvnyehzjsn',
             },
         });
 
         await transporter.sendMail({
-            from: process.env.email,
+            from: 'iamishika1441@gmail.com',
             to: email,
-            subject: 'Reset Password Link Of Cycology',
-            html: '<p>You requested for reset password, kindly use this <a href="http://localhost:3600/reset-password/token=' + token + '">link</a> to reset your password</p>'
+            subject: `Reset Password Link Of Cycology`,
+            html: `<p>You requested for reset password, kindly use this <a href="http://qa.cyclologyindia.com/update-password?token=' + token + '">link</a> to reset your password</p></br>DON't SAHRE IT WITH ANYONE!`
         });
         console.log("email sent sucessfully");
     } catch (error) {

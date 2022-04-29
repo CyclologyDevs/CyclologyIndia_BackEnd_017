@@ -11,13 +11,13 @@ const update_password = async (req, res, next) => {
         `UPDATE users set 
            password = COALESCE(?,Password)
            WHERE token = ?`,
-        [data.password, req.params.token],
+        [data.password, req.body.token],
         function (err, result) {
             if (err) {
                 res.status(400).json({ "error": res.message })
                 return;
             }
-            res.json({
+            res.status(200).json({
                 message: "success",
                 data: data,
                 changes: this.changes

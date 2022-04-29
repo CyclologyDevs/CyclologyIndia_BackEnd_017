@@ -14,7 +14,7 @@ isInEvent = async (req, res, next) => {
         if(data.length == 0)
             res.status(400).send("NOT in EVENT");
         else
-        res.status(200).send("In EVENT");
+            res.status(200).send("In EVENT");
     })
 }
 

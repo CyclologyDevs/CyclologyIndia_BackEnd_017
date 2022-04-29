@@ -18,7 +18,7 @@ router.get('/logout',user_controller.logout)
 router.post('/auth', user_controller.auth)
 router.get('/all', user_controller.alluser)
 router.get('/profile/:uuid', user_controller.single)
-router.patch('/edit_profile', user_controller.update)
+router.patch('/edit_profile', dp.single('filename'),  user_controller.update)
 router.delete('/:uuid', user_controller.deleteit)
 
 module.exports = router
@@ -27,4 +27,4 @@ module.exports = router
 router.post('/imageupload', blog.single('files'),blog_controller)
 router.post('/resetpassword', reset)
 //router.post('/updatepassword', update)
-router.post('/updatepassword/:token', update)
+router.post('/updatepassword', update)

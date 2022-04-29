@@ -20,7 +20,7 @@ joinEvent = async (req, res, next) => {
          
           
           console.error("Event Joint by Athlete =>  "+ uuid + " " + athlete_id);
-          return res.status(200);
+          return res.status(200).send("EVENT JOINT SUCCESSFULLY!");
         })
     } else {
       return res.status(400).json({ "error": "user alredy have joint the event" });
