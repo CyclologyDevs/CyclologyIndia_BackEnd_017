@@ -1,8 +1,10 @@
 
+//POST http://153.92.5.193:3600/is_in_event
+
 POST http://127.0.0.1:3600/is_in_event
 
 {
-    "uuid": "1",
-    "athlete_id": "98790103",
-    "event_name": "Event 2"
+    "uuid" : 1651519520727,
+    "athlete_id": 97068239,
+    "event_name" : "May750"
 }

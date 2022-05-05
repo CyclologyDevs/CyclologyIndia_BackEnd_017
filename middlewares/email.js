@@ -24,7 +24,7 @@ const sendEmail = async (email, token) => {
             from: 'cycologydevteam@gmail.com',
             to: email,
             subject: `Reset Password Link Of Cycology`,
-            html: `<p>You requested for reset password, kindly use this <a href="http://qa.cyclologyindia.com/update-password?token=' + token + '">link</a> to reset your password</p></br>DON't SAHRE IT WITH ANYONE!`
+            html: `<p>You requested for reset password, kindly use this <a href="http://qa.cyclologyindia.com/update-password?token=${token}">link</a> to reset your password</p></br>DON't SHARE IT WITH ANYONE!`
         });
         console.log("email sent sucessfully");
     } catch (error) {

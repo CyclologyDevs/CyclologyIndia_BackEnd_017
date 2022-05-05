@@ -20,21 +20,6 @@ const register = async (req, res) => {
     var errors = [];
     try {
         const { fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
-        
-        /*
-        var dir = `./ProfilePics/${req.body.fname}/`;
-
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        var oldPath = `./ProfilePics/${req.file.filename}`
-        var newPath = `./ProfilePics/${req.body.fname}/${req.file.filename}.jpg`;
-
-        fs.rename(oldPath, newPath, function (err) {
-            if (err) throw err
-            console.log('Image uploaded Successfully')
-        })
-        */
 
         if (!fname) {
             errors.push("Firstname is missing");
@@ -52,79 +37,130 @@ const register = async (req, res) => {
             errors.push("Password is missing");
         }
         if (errors.length) {
-            res.status(400).json({ "error": errors.join(", ") });
-            return;
+            return res.status(400).json({ "error": errors.join(", ") });
         }       
 
         console.log("Password => " + password);
 
-        var sql = "SELECT * FROM users WHERE email = ?"
-        await db.all(sql, email, async (err, result) => {
-            if (err) {
-                res.status(402).json({ "error": err.message });
-                return;
-            }
-                //console.log(req.file)
-            if (result.length == 0) {
-                var data = {
-                    uuid: Date.now(),
-                    filename: req.file.filename,
-                    //filename: "CYCLOLOGY",
-                    fname: fname,
-                    lname: lname,
-                    email: email,
-                    password: bcrypt.hashSync(password, salt),
-                    phone_number: phone_number,
-                    gender: gender,
-                    date_of_birth: date_of_birth,
-                    blood_group: blood_group,
-                    emergency_contact: emergency_contact,
-	                relation_emergency_contact: relation_emergency_contact,
-	                insta_link: insta_link,
-	                facebook_link: facebook_link,
-	                twitter_link: twitter_link,
-	                linkdin_link: linkdin_link,
-	                occupation: occupation,
-	                about_you: about_you,
-	                accident_insurance_number: accident_insurance_number,
-                    DateCreated: Date('now')
+        const sql = "SELECT * FROM users WHERE email = ?";
+        
+        if(!req.file) {
+            await db.all(sql, email, async (err, result) => {
+                if (err) {
+                    return res.status(402).json({ "error": err.message });
                 }
-
-                
-                var dir = `./ProfilePics/${data.uuid}/`;
-
-                if (!fs.existsSync(dir)) {
-                    fs.mkdirSync(dir, { recursive: true });
-                }
-                var oldPath = `./ProfilePics/${req.file.filename}`
-                var newPath = `./ProfilePics/${data.uuid}/${req.file.filename}.jpg`;
-            
-                fs.rename(oldPath, newPath, function (err) {
-                    if (err) throw err
-                    console.log('Image uploaded Successfully')
-                })
-                
-
-                var sql = 'INSERT INTO users (uuid,filename, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-                var params = [data.uuid, data.filename, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
-                await db.run(sql, params, (err, innerResult) => {
-                    if (err) {                        
-                        res.status(400).json({ "error": err.message })
-                        return;
+                if (result.length == 0) {
+                    var data = {
+                        uuid: Date.now(),
+                        fname: fname,
+                        lname: lname,
+                        email: email,
+                        password: bcrypt.hashSync(password, salt),
+                        phone_number: phone_number,
+                        gender: gender,
+                        date_of_birth: date_of_birth,
+                        blood_group: blood_group,
+                        emergency_contact: emergency_contact,
+                        relation_emergency_contact: relation_emergency_contact,
+                        insta_link: insta_link,
+                        facebook_link: facebook_link,
+                        twitter_link: twitter_link,
+                        linkdin_link: linkdin_link,
+                        occupation: occupation,
+                        about_you: about_you,
+                        accident_insurance_number: accident_insurance_number,
+                        DateCreated: Date('now')
                     }
-                    res.status(201).send("Success1");
-                    console.log("User Created")
-                });
-            }
 
-            else {
-                res.status(400).send("User Already Exist. Please Login");  
-                return;
-            }
-        });
-    } catch (err) {
-        console.log(err);
-    }
+                    var sql = 'INSERT INTO users (uuid, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                    var params = [data.uuid, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
+                    await db.run(sql, params, (err, innerResult) => {
+                        if (err) {                        
+                            return res.status(400).json({ "error": err.message });
+                        }
+                        console.log("User Created")
+                        return res.status(201).send("Success1");
+                    });
+                }
+    
+                else {
+                    res.status(400).send("User Already Exist. Please Login");  
+                    return;
+                }
+            });
+
+        } else {
+            await db.all(sql, email, async (err, result) => {
+                if (err) {
+                    res.status(402).json({ "error": err.message });
+                    return;
+                }
+                    //console.log(req.file)
+                if (result.length == 0) {
+                    var data = {
+                        uuid: Date.now(),
+                        filename: req.file.filename,
+                        fname: fname,
+                        lname: lname,
+                        email: email,
+                        password: bcrypt.hashSync(password, salt),
+                        phone_number: phone_number,
+                        gender: gender,
+                        date_of_birth: date_of_birth,
+                        blood_group: blood_group,
+                        emergency_contact: emergency_contact,
+                        relation_emergency_contact: relation_emergency_contact,
+                        insta_link: insta_link,
+                        facebook_link: facebook_link,
+                        twitter_link: twitter_link,
+                        linkdin_link: linkdin_link,
+                        occupation: occupation,
+                        about_you: about_you,
+                        accident_insurance_number: accident_insurance_number,
+                        DateCreated: Date('now')
+                    }
+    
+                    
+                    var dir = `./ProfilePics/${data.uuid}/`;
+    
+                    if (!fs.existsSync(dir)) {
+                        fs.mkdirSync(dir, { recursive: true });
+                    }
+                    var oldPath = `./ProfilePics/${req.file.filename}`
+                    var newPath = `./ProfilePics/${data.uuid}/${req.file.filename}.jpg`;
+                
+                    fs.rename(oldPath, newPath, function (err) {
+                        if (err) throw err
+                        console.log('Image uploaded Successfully')
+                    })
+                    
+    
+                    var sql = 'INSERT INTO users (uuid,filename, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                    var params = [data.uuid, data.filename, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
+                    await db.run(sql, params, (err, innerResult) => {
+                        if (err) {                        
+                            res.status(400).json({ "error": err.message })
+                            return;
+                        }
+                        res.status(201).send("Success1");
+                        console.log("User Created")
+                    });
+                }
+    
+                else {
+                    let oldPath = `./ProfilePics/${req.file.filename}`;
+                    if( fs.existsSync(oldPath) )
+                        fs.unlinkSync(oldPath);
+                    
+                    return res.status(400).send("User Already Exist. Please Login");  
+                }
+            });
+        }
+
+        } catch (err) {
+            console.log(err);
+            return res.status(500).json({ "error": "Error occured" });;
+        }
 }
 
 
@@ -183,8 +219,8 @@ const login = async (req, res) => {
                 })
 
             } else {
-                // console.log("No Password Match Found!");
-                return res.status(400).send("No Match");
+                //console.log("No Password Match Found!");
+                return res.status(400).send("No Match!");
             }
 
             //return res.status(200).send(user);   

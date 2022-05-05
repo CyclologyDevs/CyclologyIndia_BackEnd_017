@@ -11,10 +11,13 @@ isInEvent = async (req, res, next) => {
         if (err) 
           return res.status(400).json({ "error": err.message });
 
+          console.log(data);
+          console.log(uuid, athlete_id, event_name)
+
         if(data.length == 0)
-            res.status(400).send("NOT in EVENT");
+            return res.status(400).send("NOT in EVENT");
         else
-            res.status(200).send("In EVENT");
+            return res.status(200).send("In EVENT");
     })
 }
 
