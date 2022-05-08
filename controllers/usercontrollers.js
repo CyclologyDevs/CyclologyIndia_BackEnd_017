@@ -7,6 +7,7 @@ const path = require('path');
 const cookieParser = require("cookie-parser");
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
+const UUID = require('uuid-int');
 const salt = bcrypt.genSaltSync(10);
 app.use(cookieParser());
 
@@ -42,6 +43,10 @@ const register = async (req, res) => {
 
         console.log("Password => " + password);
 
+        const id = 2;
+        const generator = UUID(id);
+        const size = generator.uuid()%1000000;
+
         const sql = "SELECT * FROM users WHERE email = ?";
         
         if(!req.file) {
@@ -51,7 +56,7 @@ const register = async (req, res) => {
                 }
                 if (result.length == 0) {
                     var data = {
-                        uuid: Date.now(),
+                        uuid: 'cyclo'+size,
                         fname: fname,
                         lname: lname,
                         email: email,
@@ -98,7 +103,7 @@ const register = async (req, res) => {
                     //console.log(req.file)
                 if (result.length == 0) {
                     var data = {
-                        uuid: Date.now(),
+                        uuid: 'cyclo'+size,
                         filename: req.file.filename,
                         fname: fname,
                         lname: lname,
