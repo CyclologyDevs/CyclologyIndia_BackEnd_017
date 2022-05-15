@@ -16,13 +16,40 @@ process.on("message", async function (message) {
 
 
 function insertActivitiesIntoStravaTable(athelete,user, json) {
-  const sql = 'INSERT INTO strava (uuid,athlete_id, activity_id, activity_name average_speed, distance, elapsed_time, max_speed, moving_time, start_date_local, start_date_local_epoch, total_elevation_gain) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)';
-  let params;
-  params = [athelete.uuid,user.owner_id, user.object_id, json.activity_name, json.average_speed, json.distance, json.elapsed_time, json.max_speed, json.moving_time, json.start_date_local, json.start_date_local_epoch, json.total_elevation_gain];
-      db.run(sql, params, err => {
-          if (err)
-            return console.error(err.message);
+  
+
+    let sql = 'SELECT uuid from strava where uuid = ?';
+    let params = [athelete.uuid.id]; 
+
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+          return console.error(err.message);
+        }
+        
+        if(rows.length == 0)
+        {
+            sql = 'INSERT INTO strava (uuid,athlete_id, activity_id, activity_name average_speed, distance, elapsed_time, max_speed, moving_time, start_date_local, start_date_local_epoch, total_elevation_gain) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)';
+            params = [athelete.uuid,user.owner_id, user.object_id, json.activity_name, json.average_speed, json.distance, json.elapsed_time, json.max_speed, json.moving_time, json.start_date_local, json.start_date_local_epoch, json.total_elevation_gain];
+            db.run(sql, params, err => {
+                if (err)
+                    return console.error(err.message);
+                
+                console.log("Date Entry Done!!");
         })
+        }
+        else
+        {
+            sql = 'UPDATE strava SET activity_name = ? where activity_id = ?'
+            //sql = 'INSERT INTO strava (uuid,athlete_id, activity_id, activity_name average_speed, distance, elapsed_time, max_speed, moving_time, start_date_local, start_date_local_epoch, total_elevation_gain) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)';
+            params = [json.activity_name, user.object_id];
+            db.run(sql, params, err => {
+                if (err)
+                    return console.error(err.message);
+                
+                console.log("Date Entry Updated!!");
+            })
+        }
+    })
 }
 
 function changeDatetimeToDate(dateTimeObj)
@@ -39,7 +66,7 @@ async function stravaApiCall(athelete,user,access_token,callback_insertActivitie
   
 
   var json1 = {}
-        if (json.from_accepted_tag == process.env.from_accepted_tag && json.type == process.env.type  && json.manual == process.env.manual)
+        if (json.from_accepted_tag == process.env.from_accepted_tag && json.type == process.env.type && json.manual == process.env.manual)
         {
             json1 = {
                 activity_name: json.name,

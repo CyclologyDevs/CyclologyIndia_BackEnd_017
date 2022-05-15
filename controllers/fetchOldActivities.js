@@ -44,11 +44,11 @@ function changeDatetimeToDate(json1)
 
   function insertActivitiesIntoStravaTable(athelete,user, json) {
 
-    const sql = 'INSERT INTO strava (uuid,athlete_id, activity_id, average_speed, distance, elapsed_time, max_speed, moving_time, start_date_local, start_date_local_epoch, total_elevation_gain) VALUES(?,?,?,?,?,?,?,?,?,?,?)';
+    const sql = 'INSERT INTO strava (uuid,athlete_id, activity_id, activity_name, average_speed, distance, elapsed_time, max_speed, moving_time, start_date_local, start_date_local_epoch, total_elevation_gain) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)';
     let params;
 
     json.forEach( (json) => {
-        params = [user.uuid, user.athlete_id, json.id, json.average_speed, json.distance, json.elapsed_time, json.max_speed, json.moving_time, json.start_date_local, json.start_date_local_epoch, json.total_elevation_gain];
+        params = [user.uuid, user.athlete_id, json.id, json.activity_name, json.average_speed, json.distance, json.elapsed_time, json.max_speed, json.moving_time, json.start_date_local, json.start_date_local_epoch, json.total_elevation_gain];
     
         db.run(sql, params, err => {
             if (err)
@@ -71,10 +71,11 @@ function changeDatetimeToDate(json1)
     var json1 = []
       for (const keys in json)
       {
-          if (json[keys].from_accepted_tag == process.env.from_accepted_tag && json[keys].type == process.env.type)
+          if (json[keys].from_accepted_tag == process.env.from_accepted_tag && json[keys].type == process.env.type  && json[keys].manual == process.env.manual) 
           {
               temp = {
                   id: json[keys].id,
+                  activity_name: json[keys].name,
                 average_speed: json[keys].average_speed,
                 max_speed: json[keys].max_speed,
                 distance: json[keys].distance,

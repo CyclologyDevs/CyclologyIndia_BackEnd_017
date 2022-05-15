@@ -74,16 +74,42 @@ async function webhook(reqJson)
 
 // Creates the endpoint for our webhook
 app.post('/webhook', (req, res) => {
-  webhook(req.body); // Inserting Webhook Values into DB
 
-  //Working with Child Process for Multi-ThreadingDefining Child Process
-  const childProcess = fork('webhookToStrava.js');
-  childProcess.send(JSON.stringify(req.body));
-  childProcess.on("Message", function (Message)  {console.log("ok " + Message);})
-  //childProcess.on("Message", (Message) => {console.log("ok " + Message);})
+  if(req.body.aspect_type == 'create')
+  {
+    webhook(req.body); // Inserting Webhook Values into DB
+
+    //Working with Child Process for Multi-ThreadingDefining Child Process
+    const childProcess = fork('webhookToStrava.js');
+    childProcess.send(JSON.stringify(req.body));
+    childProcess.on("Message", function (Message)  {console.log("ok " + Message);})
+    //childProcess.on("Message", (Message) => {console.log("ok " + Message);})
+  }
+  else if(req.body.aspect_type == 'delete')
+  {
+    const sql = 'DELETE FROM strava, webhook WHERE webhook.object_id = ? OR strava.athlete_id = ?;';
+    let params = [req.body.object_id, req.body.object_id];
+
+    db.run(sql, params, err => {
+      if (err)
+        return console.error(err.message);
+    
+        console.log("Data Deleted from Strava and Webhook Table DB!!");
+    })
+  elif(req.body.aspect_type == 'update')
+  {
+
+    //Working with Child Process for Multi-ThreadingDefining Child Process
+    const childProcess = fork('webhookToStravaUpdate.js');
+    childProcess.send(JSON.stringify(req.body));
+    childProcess.on("Message", function (Message)  {console.log("ok " + Message);})
+    //childProcess.on("Message", (Message) => {console.log("ok " + Message);})
+
+  }
+  
   
 
-  //console.log("webhook event received!", req.query, req.body);
+  console.log("webhook event received!", req.query, req.body);
   res.status(200).send('EVENT_RECEIVED');
 });
 

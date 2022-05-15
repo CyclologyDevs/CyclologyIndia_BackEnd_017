@@ -43,9 +43,9 @@ const register = async (req, res) => {
 
         console.log("Password => " + password);
 
-        const id = 2;
-        const generator = UUID(id);
-        const size = generator.uuid()%1000000;
+        var id = -1;
+        //const generator = UUID(id);
+        //const size = generator.uuid()%1000000;
 
         const sql = "SELECT * FROM users WHERE email = ?";
         
@@ -56,7 +56,7 @@ const register = async (req, res) => {
                 }
                 if (result.length == 0) {
                     var data = {
-                        uuid: 'cyclo'+size,
+                        uuid: 'cyclo'+ (size++),
                         fname: fname,
                         lname: lname,
                         email: email,
