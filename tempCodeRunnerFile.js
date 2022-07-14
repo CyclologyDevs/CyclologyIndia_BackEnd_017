@@ -1,0 +1,1 @@
+SELECT users.uuid, users.athlete_id, users.refresh_token, users.access_token, users.access_token_expiration, event.event_start_date, event.event_end_date, event.event_name FROM users JOIN event ON users.uuid = event.uuid WHERE event_end_date > DATE('now') AND users.uuid=? AND users.athlete_id=? GROUP BY users.uuid ORDER BY event.event_start_date DESC

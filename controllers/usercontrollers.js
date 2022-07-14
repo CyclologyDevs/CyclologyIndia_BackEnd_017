@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express();
-
 require("dotenv").config();
 const fs = require('fs');
 const path = require('path'); 
@@ -10,7 +9,6 @@ var bcrypt = require('bcryptjs');
 const UUID = require('uuid-int');
 const salt = bcrypt.genSaltSync(10);
 app.use(cookieParser());
-
 const db = require('../config/database');   //For DataBase Connection
 
 
@@ -38,25 +36,23 @@ const register = async (req, res) => {
             errors.push("Password is missing");
         }
         if (errors.length) {
+            console.log("IMP field MISSINGING while Registering");
             return res.status(400).json({ "error": errors.join(", ") });
         }       
 
-        console.log("Password => " + password);
-
-        var id = -1;
-        //const generator = UUID(id);
-        //const size = generator.uuid()%1000000;
 
         const sql = "SELECT * FROM users WHERE email = ?";
         
         if(!req.file) {
             await db.all(sql, email, async (err, result) => {
                 if (err) {
-                    return res.status(402).json({ "error": err.message });
-                }
+                    console.log("Error Occured while registering Email ",email);
+                    console.error(err.message);
+                    return res.status(500).send("Error Occured while registering Email ",email);
+                  }
+	   	 
                 if (result.length == 0) {
                     var data = {
-                        uuid: 'cyclo'+ (size++),
                         fname: fname,
                         lname: lname,
                         email: email,
@@ -77,33 +73,36 @@ const register = async (req, res) => {
                         DateCreated: Date('now')
                     }
 
-                    var sql = 'INSERT INTO users (uuid, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-                    var params = [data.uuid, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
+                    var sql = 'INSERT INTO users (fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                    var params = [data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
                     await db.run(sql, params, (err, innerResult) => {
-                        if (err) {                        
-                            return res.status(400).json({ "error": err.message });
-                        }
-                        console.log("User Created")
+                        if (err) {
+                            console.log("Error Occured while insert registering Email ",email);
+                            console.error(err.message);
+                            return res.status(500).send("Error Occured while insert registering Email ",email);
+                          }
+
+                        console.log("Accounted Created for Email",data.email)
                         return res.status(201).send("Success1");
                     });
                 }
     
                 else {
-                    res.status(400).send("User Already Exist. Please Login");  
-                    return;
+                    console.log("Accounted Already Exits for Email",email)
+                    return res.status(400).send("User Already Exist. Please Login");  
                 }
             });
 
         } else {
             await db.all(sql, email, async (err, result) => {
                 if (err) {
-                    res.status(402).json({ "error": err.message });
-                    return;
-                }
-                    //console.log(req.file)
+                    console.log("Error Occured while registering Email ",email);
+                    console.error(err.message);
+                    return res.status(500).send("Error Occured while registering Email ",email);
+                  }
+                    
                 if (result.length == 0) {
                     var data = {
-                        uuid: 'cyclo'+size,
                         filename: req.file.filename,
                         fname: fname,
                         lname: lname,
@@ -126,29 +125,35 @@ const register = async (req, res) => {
                     }
     
                     
-                    var dir = `./ProfilePics/${data.uuid}/`;
+                    var dir = `./ProfilePics/${data.email}/`;
     
                     if (!fs.existsSync(dir)) {
                         fs.mkdirSync(dir, { recursive: true });
                     }
                     var oldPath = `./ProfilePics/${req.file.filename}`
-                    var newPath = `./ProfilePics/${data.uuid}/${req.file.filename}.jpg`;
+                    var newPath = `./ProfilePics/${data.email}/${req.file.filename}.jpg`;
                 
                     fs.rename(oldPath, newPath, function (err) {
-                        if (err) throw err
-                        console.log('Image uploaded Successfully')
+                        if (err) {
+                            console.log("Error Occured while IMG upload Email ",data.email);
+                            console.error(err.message);
+                            return res.status(500).send("Error Occured while  IMG upload Email ",data.email);
+                          }
+                        console.log('Image uploaded Successfully for email',data.email)
                     })
                     
     
-                    var sql = 'INSERT INTO users (uuid,filename, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-                    var params = [data.uuid, data.filename, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
+                    var sql = 'INSERT INTO users (filename, fname, lname, email, password, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, DateCreated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                    var params = [data.filename, data.fname, data.lname, data.email, data.password, data.phone_number, data.gender, data.date_of_birth, data.blood_group, data.emergency_contact, data.relation_emergency_contact, data.insta_link, data.facebook_link, data.twitter_link, data.linkdin_link, data.occupation, data.about_you, data.accident_insurance_number, Date('now')]
                     await db.run(sql, params, (err, innerResult) => {
-                        if (err) {                        
-                            res.status(400).json({ "error": err.message })
-                            return;
-                        }
-                        res.status(201).send("Success1");
-                        console.log("User Created")
+                        if(err) {
+                            console.log("Error Occured while insert registering Email ",data.email);
+                            console.error(err.message);
+                            return res.status(500).send("Error Occured while insert registering Email ",data.email);
+                          }
+
+                          console.log("Accounted Created for Email",data.email)
+                          return res.status(201).send("Success1");
                     });
                 }
     
@@ -157,14 +162,17 @@ const register = async (req, res) => {
                     if( fs.existsSync(oldPath) )
                         fs.unlinkSync(oldPath);
                     
-                    return res.status(400).send("User Already Exist. Please Login");  
+                        console.log("Accounted Already Exits for Email",email)
+                        return res.status(400).send("User Already Exist. Please Login");  
                 }
             });
         }
 
         } catch (err) {
-            console.log(err);
-            return res.status(500).json({ "error": "Error occured" });;
+            
+                console.log("Error Occured while catch registering");
+                console.error(err);
+                return res.status(500).send("Error Occured while catch registering");
         }
 }
 
@@ -175,9 +183,8 @@ const login = async (req, res) => {
 
     try {
         const { email, password } = req.body;
-        // console.log( email, password );
-        // Make sure there is an Email and Password in the request
         if (!(email && password)) {
+            console.log("Email or Password Missing while Login")
             res.status(400).send("All input is required");
         }
 
@@ -186,25 +193,25 @@ const login = async (req, res) => {
         const sql = "SELECT uuid,filename,fname,lname,athlete_id,email,password,phone_number,gender,date_of_birth,blood_group,emergency_contact,relation_emergency_contact,insta_link,facebook_link,twitter_link,linkdin_link,occupation,about_you,accident_insurance_number FROM users WHERE email = ?";
         db.all(sql, email, async function (err, rows) {
             if (err) {
-                res.status(400).json({ "error": err.message })
-                return;
-            }
+                console.log("Error Occured while Login -DB Email ",email);
+                console.error(err.message);
+                return res.status(500).send("Error Occured while Login -DB Email ",email);
+              }
 
             if(rows.length == 0){
-                // console.log("No Email Match Found!");
+                console.log("NO Account Foind in Login email",email);
                 return res.status(400).send("No Match");
             }
-            rows.forEach(function (row) {;
+
+            rows.forEach(function (row) {
                 user.push(row);
             })
 
-            //console.log(password);
-            // console.log(user[0].password);
+        
             var PHash = await bcrypt.compare(password, user[0].password);
             
 
             if (PHash) {
-                // * CREATE JWT TOKEN
                 var token = jwt.sign(
                     { user_uuid: user[0].uuid, username: user[0].fname, email },
                     process.env.TOKEN_KEY,
@@ -215,26 +222,25 @@ const login = async (req, res) => {
 
                 db.all(`UPDATE users SET DateLoggedIn = COALESCE(?,DateLoggedIn) WHERE email = ?;`, [Date('now'), email], (err) => {
                     if (err) {
-                        return res.send(err.message).status(400);
-                    }
-                    //return res.status(200).sendFile(path.join(__dirname, `./ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`))
-                    // return res.status(200).sendFile(path.join(__dirname, `./ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`)).json({"jwt": token, "user": user[0]});
-                    //return res.status(200).json({"jwt": token, "user": user[0], "Photo": path.join(__dirname, `../ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`)});
-                    return res.status(200).json({"jwt": token, "user": user[0], "Photo":`ProfilePics/${user[0].uuid}/${user[0].filename}.jpg`});
+                        console.log("Error Occured while DateLoggedIn -db  Email ",email);
+                        console.error(err.message);
+                        return res.status(500).send("Error Occured while DateLoggedIn -db Email ",email);
+                      }
+
+                      console.log("Logged IN email",email);
+                    return res.status(200).json({"jwt": token, "user": user[0], "Photo":`ProfilePics/${user[0].email}/${user[0].filename}.jpg`});
                 })
 
             } else {
-                //console.log("No Password Match Found!");
+                console.log("NO Account Foind in Login email",email);
                 return res.status(400).send("No Match!");
             }
-
-            //return res.status(200).send(user);   
-            //return res.cookie('jwt', token, { httpOnly: true }).send(user).status(200)
-            console.log("User Logged In");
         });
 
     } catch (err) {
-        console.log(err);
+        console.log("Error Occured while catch Login");
+        console.error(err);
+        return res.status(500).send("Error Occured while catch Login");
     }
 };
 
@@ -262,9 +268,10 @@ const alluser = (req, res, next) => {
     var params = []
     db.all(sql, params, (err, rows) => {
         if (err) {
-            res.status(400).json({ "error": err.message });
-            return;
-        }
+            console.log("Error Occured while ALLuser -db  Email ",email);
+            console.error(err.message);
+            return res.status(500).send("Error Occured while ALLuser -db Email ",email);
+          }
         res.json({
             "message": "success2",
             "data": rows
@@ -280,16 +287,21 @@ const single = (req, res, next) => {
     var params = [req.params.uuid]
     db.all(sql, params, (err, row) => {
         if (err) {
-            res.status(400).json({ "error": err.message });
-            return;
-        }
+            console.log("Error Occured while single user -db  Email ",email);
+            console.error(err.message);
+            return res.status(500).send("Error Occured while single user -db Email ",email);
+          }
+
         else if(row.length == 0) {
-            res.status(400).send(`NO Users found for uuid =  ${params}`);
-            return;
+            console.log("No user found with uuid",params)
+            return res.status(400).send(`NO Users found for uuid =  ${params}`);
         }
-        res.json({
+
+        console.log("Profile Data SEND for uuid",params)
+        return res.json({
             "message": "success3",
-            "data": row[0]
+            "data": row[0],
+	    "Photo":`ProfilePics/${row[0].email}/${row[0].filename}.jpg`
         })
     });
 };
@@ -299,20 +311,20 @@ const single = (req, res, next) => {
 
 const update = async (req, res, next) => {
 
-    const { uuid, fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
+    const { uuid, fname, lname, email, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, } = req.body;
 
-        if(req.file !== undefined) {
+        if(req.file != undefined) {
 
             let fily = req.file.filename;
-            let dir = `./ProfilePics/${uuid}/`;
+            let dir = `./ProfilePics/${email}/`;
             let path = dir;
 
             if( fs.existsSync(dir) ) {
                 fs.readdirSync(dir).forEach( function(file) {
                   var curPath = path + "/" + file;
-                    if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                    if(fs.lstatSync(curPath).isDirectory()) { 
                         deleteFolderRecursive(curPath);
-                    } else { // delete file
+                    } else { 
                         fs.unlinkSync(curPath);
                     }
                 });
@@ -323,11 +335,15 @@ const update = async (req, res, next) => {
         
         
                 var oldPath = `./ProfilePics/${req.file.filename}`
-                var newPath = `./ProfilePics/${req.body.uuid}/${req.file.filename}.jpg`;
+                var newPath = `./ProfilePics/${req.body.email}/${req.file.filename}.jpg`;
         
                 fs.rename(oldPath, newPath, function (err) {
-                    if (err) throw err
-                    console.log('Image uploaded Successfully')
+                    if (err) {
+                        console.log("Error Occured while IMG upload uuid ",uuid);
+                        console.error(err.message);
+                        return res.status(500).send("Error Occured while  IMG upload uuid ",uuid);
+                      }
+                    console.log('Image uploaded Successfully for uuid ',uuid);
                 })
 
                 db.run(
@@ -335,6 +351,7 @@ const update = async (req, res, next) => {
                         filename = COALESCE(?,filename),
                         fname = COALESCE(?,fname),
                         lname = COALESCE(?,lname),
+			email = COALESCE(?,email),
                         phone_number = COALESCE(?,phone_number),
                         gender = COALESCE(?,gender),
                         date_of_birth = COALESCE(?,date_of_birth),
@@ -350,14 +367,16 @@ const update = async (req, res, next) => {
                         accident_insurance_number = COALESCE(?,accident_insurance_number)
                         WHERE uuid = ?`,
             
-                    [fily, fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
+                    [fily, fname, lname, email, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
             
                     function (err, result) {
                         if (err) {
-                            res.status(400).json({ "error": err.message })
-                            return;
-                        }
-            
+                            console.log("Error Occured while update uuid ",uuid);
+                            console.error(err.message);
+                            return res.status(500).send("Error Occured while update uuid ",uuid);
+                          }
+                          
+                        console.log("Successfully update for uuid ",uuid);
                         return res.status(202).json({ message: "success4", changes: this.changes })
                     });
 
@@ -369,6 +388,7 @@ const update = async (req, res, next) => {
                     
                     fname = COALESCE(?,fname),
                     lname = COALESCE(?,lname),
+		    email = COALESCE(?,email),
                     phone_number = COALESCE(?,phone_number),
                     gender = COALESCE(?,gender),
                     date_of_birth = COALESCE(?,date_of_birth),
@@ -384,14 +404,16 @@ const update = async (req, res, next) => {
                     accident_insurance_number = COALESCE(?,accident_insurance_number)
                     WHERE uuid = ?`,
         
-                [fname, lname, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
+                [fname, lname, email, phone_number, gender, date_of_birth, blood_group, emergency_contact, relation_emergency_contact, insta_link, facebook_link, twitter_link, linkdin_link, occupation, about_you, accident_insurance_number, uuid],
         
                 function (err, result) {
                     if (err) {
-                        res.status(400).json({ "error": err.message })
-                        return;
-                    }
-        
+                        console.log("Error Occured while update uuid ",uuid);
+                        console.error(err.message);
+                        return res.status(500).send("Error Occured while update uuid ",uuid);
+                      }
+                    
+                    console.log("Successfully update for uuid ",uuid);
                     return res.status(202).json({ message: "success4", changes: this.changes })
                 });
 
@@ -407,9 +429,12 @@ const deleteit = (req, res, next) => {
         req.params.id,
         function (err, result) {
             if (err) {
-                res.status(400).json({ "error": res.message })
-                return;
-            }
+                console.log("Error Occured while DELETE user uuid ",uuid);
+                console.error(err.message);
+                return res.status(500).send("Error Occured while DELETE user uuid ",uuid);
+              }
+
+              console.log("Successfully user deleted for uuid ",uuid);
             res.json({ "message": "deleted", changes: this.changes })
         });
 }
